@@ -4,8 +4,6 @@
 
   environment.systemPackages = with pkgs; [
 
-    inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
-    
     # KDE Packages
     kdePackages.kdenlive
     kdePackages.filelight
@@ -35,6 +33,7 @@
     distrobox
     distroshelf
     podman
+    gnupg
 
     # General programs
     qbittorrent
@@ -53,6 +52,13 @@
     gparted
     logmein-hamachi
     haguichi
+    filezilla
+    gearlever
+    ffmpeg
+    haruna
+    vlc
+    obs-studio
+    thunderbird
 
     # Required for Nyrna
     xdotool
@@ -74,11 +80,38 @@
     prismlauncher
     bottles
     winetricks
+    protonplus
     (discord.override {
       withOpenASAR = true;
       withVencord = true;
     })
   ];
+
+  # Link the Proton-GE nix store path to the user directory.
+  # This is needed for using nixpkgs' proton-ge-bin with Heroic and others.
+  #
+  # Discussion: https://discourse.nixos.org/t/using-proton-ge-bin-package-outside-of-steam/77598/2
+  systemd.user.tmpfiles =  {
+    enable = true; # Let this fail, if someone changes the default.
+    rules = let 
+      steaminstalldir = "%h/.local/share/Steam";
+      compatdir = "${steaminstalldir}/compatibilitytools.d";
+      link = "${compatdir}/Proton-GE";
+      target = pkgs.proton-ge-bin.steamcompattool.outPath;
+      steamdir = "%h/.steam";
+    in [
+      "d ${compatdir} - - - - -"
+      "L+ ${link} - - - - ${target}"
+
+      # When Steam gets started for the first time, it creates a directory with
+      # symlinks to the install directory (among other things). Third party
+      # tools are using these to find Proton versions.
+      "d ${steamdir} - - - - -"
+      "L ${steamdir}/root - - - - ${steaminstalldir}"
+      "L ${steamdir}/steam - - - - ${steaminstalldir}"
+    ];
+  }; 
+  
 
   # Install firefox.
   programs.firefox.enable = true;
@@ -93,9 +126,8 @@
     remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
     dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
     localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
-    extraCompatPackages = [
-      # Install ProtonGE
-      pkgs.proton-ge-bin
+    extraCompatPackages = with pkgs; [
+    proton-ge-bin
     ];
   };
 
@@ -105,5 +137,10 @@
   # Enable AppImage Support
   programs.appimage.enable = true;
   programs.appimage.binfmt = true;
+
+  programs.gnupg.agent = {
+    enable = true;
+    pinentryPackage = pkgs.pinentry-curses; # veya pkgs.pinentry-qt / pkgs.pinentry-gnome3
+  };
 
 }
