@@ -81,6 +81,7 @@
     bottles
     winetricks
     protonplus
+    heroic
     (discord.override {
       withOpenASAR = true;
       withVencord = true;
@@ -111,6 +112,18 @@
       "L ${steamdir}/steam - - - - ${steaminstalldir}"
     ];
   }; 
+
+  # Enable libvirtd daemon
+  virtualisation.libvirtd = {
+    enable = true;
+    qemu = {
+      package = pkgs.qemu_kvm; # Reduced download size by only supporting host architecture
+      runAsRoot = true;
+    };
+  };
+
+  # Enable virt-manager GUI
+  programs.virt-manager.enable = true;
   
 
   # Install firefox.

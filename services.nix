@@ -46,6 +46,9 @@
       pulse.enable = true;
       # jack.enable = true;
     };
+
+    # Enable SPICE agent for QEMU
+    spice-vdagentd.enable = true;
   };
 
   # For low latency audio
@@ -97,6 +100,14 @@
     enable32Bit = true;
   };
   hardware.enableRedistributableFirmware = true;
+
+  # Sunshine
+   services.sunshine = {
+    enable = true;
+    autoStart = true;  # optional: starts Sunshine automatically on login
+    capSysAdmin = true;
+    openFirewall = true;
+  };
 
   # Dont need it since I use KDE Plasma
   # services.blueman.enable = true;

@@ -14,6 +14,7 @@
       "cdrom"
       "dialout"
       "tty"
+      "libvirtd"
     ];
     packages = with pkgs; [
     ];
