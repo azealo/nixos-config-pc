@@ -1,10 +1,30 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
+let
+  sources = import ./lon.nix;
+  lanzaboote = import sources.lanzaboote {
+    inherit pkgs;
+  };
+in
 {
+  imports = [ lanzaboote.nixosModules.lanzaboote ];
+
+  environment.systemPackages = [
+    # For debugging and troubleshooting Secure Boot
+    pkgs.sbctl
+  ];
+
   boot = {
     # Bootloader
-    loader.systemd-boot.enable = true;
+    # Lanzaboote takes over systemd-boot management
+    loader.systemd-boot.enable = lib.mkForce false;
     loader.efi.canTouchEfiVariables = true;
+
+    # Lanzaboote Secure Boot configuration
+    lanzaboote = {
+      enable = true;
+      pkiBundle = "/var/lib/sbctl";
+    };
 
     # Linux Kernel
     kernelPackages = pkgs.linuxPackages_latest;
@@ -21,13 +41,10 @@
       # ];
     };
 
-    # Adjustments for zram
-    #kernel.sysctl = {
-    #  "vm.swappiness" = 10; # High value is good for zRAM (max is 200)
-    #  "vm.watermark_boost_factor" = 0; # Reduces stuttering when memory is tight
-    #  "vm.watermark_scale_factor" = 125;
-    #  "vm.page-cluster" = 0;
-    #};
+    # Low swappiness keeps swap idle until system RAM is genuinely full
+    kernel.sysctl = {
+      "vm.swappiness" = 10;
+    };  
 
     # Enable "Silent boot"
     consoleLogLevel = 3;
@@ -38,11 +55,20 @@
       "boot.shell_on_fail"
       "udev.log_priority=3"
       "rd.systemd.show_status=auto"
+      "clearcpuid=umip"
     ];
+
     # Hide the OS choice for bootloaders.
     # It's still possible to open the bootloader list by pressing any key
-    # It will just not appear on screen unless a key is pressed
+    # It will just not appear on screen unless a key is pressed 
     loader.timeout = 0;
-
   };
+
+  # Emergency swap
+  swapDevices = [
+    {
+      device = "/var/lib/swapfile";
+      size = 16 * 1024; # Size in MB
+    }
+  ];
 }

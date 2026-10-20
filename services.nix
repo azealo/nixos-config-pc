@@ -37,6 +37,9 @@
     # Enable TRIM on SSD
     fstrim.enable = true;
 
+    # Enable Tailscale
+    tailscale.enable = true;
+
     # Enable sound with pipewire.
     pulseaudio.enable = false;
     pipewire = {
